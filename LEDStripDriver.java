@@ -123,6 +123,54 @@ public class LEDStripDriver
             }
         }
     }
+
+    public static void brightnessSet(double brightness, double scale, double min)
+    {
+        for(int strip = 0; strip < strips.length; strip++)
+        {
+            for(int pixel = 0; pixel < strips[strip].length; pixel++)
+            {
+                strips[strip][pixel][3] = (brightness/scale)*(255-min) + min;
+            }
+        }
+    }
+
+    public static void brightnessSet_StripRange(double brightness, double scale, double min, int start, int stop)
+    {
+        for(int strip = start; strip < stop; strip++)
+        {
+            for(int pixel = 0; pixel < strips[strip].length; pixel++)
+            {
+                strips[strip][pixel][3] = (brightness/scale)*(255-min) + min;
+            }
+        }
+    }
+
+    public static void colorSet_StripRange(double brightness, double scale, double min, int start, int stop)
+    {
+        for(int strip = start; strip < stop; strip++)
+        {
+            for(int pixel = 0; pixel < strips[strip].length; pixel++)
+            {
+                strips[strip][pixel] = colorWheel((int)((brightness/scale)*(255-min) + min));
+            }
+        }
+    }
+
+    public static void numberSet_StripRange(double brightness, double scale, double min, int start, int stop)
+    {
+        for(int strip = start; strip < stop; strip++)
+        {
+            for(int pixel = 0; pixel < ((int)((brightness/scale)*(strips[strip].length-min) + min)); pixel++)
+            {
+                strips[strip][pixel][3] = 255.0;
+            }
+            for(int pixel2 = ((int)((brightness/scale)*(strips[strip].length-min) + min)); pixel2 < strips[strip].length; pixel2++)
+            {
+                strips[strip][pixel2][3] = 0;
+            }
+        }
+    }
     
     public static double [] colorWheel(int pos)
     {
