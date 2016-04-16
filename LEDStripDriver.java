@@ -1,13 +1,14 @@
 import javax.swing.JFrame;
 import java.util.Arrays;
+import java.util.Random;
 
 public class LEDStripDriver
 {
     private static LEDStripSim display;
     private static JFrame frame;
     
-    private static int numStrips = 2;
-    private static int numPixels   = 120;
+    private static int numStrips = 10;
+    private static int numPixels   = 60;
     
     private static double [][][] strips;
     
@@ -15,6 +16,9 @@ public class LEDStripDriver
     {
         setupDisplay();
         startupSequence();
+
+        sparkle(122.0, 10.0, 12.0, 50.0, 255.0, 13.0, 5, false);
+
         rainbow();
         
         //pulse();
@@ -72,6 +76,74 @@ public class LEDStripDriver
                 // you probably want to quit if the thread is interrupted
                 return;
             }
+        }
+    }
+
+    public static void sparkle(double r, double g, double b, double minA, double maxA, double maxStep, int deltaLongevity, boolean rainbow)
+    {
+        minA = Math.max(minA, 0.0);
+        maxA = Math.min(maxA, 255.0);
+
+        Random rand = new Random();
+        double [][] deltas = new double[strips.length][strips[0].length];
+
+        //Set initial values:
+        for(int strip = 0; strip < strips.length; strip++)
+        {
+            for(int pixelNum = 0; pixelNum < strips[strip].length; pixelNum++)
+            {
+                strips[strip][pixelNum][0] = r;
+                strips[strip][pixelNum][1] = g;
+                strips[strip][pixelNum][2] = b;
+                strips[strip][pixelNum][3] = rand.nextDouble() * (maxA * 0.8);
+
+                deltas[strip][pixelNum] = ((rand.nextDouble() * 2) - 1.0) * maxStep;
+            }
+        }
+
+        //If rainbow:
+        int j = 0;
+
+        while(true)
+        {
+            for(int strip = 0; strip < strips.length; strip++)
+            {
+                for(int pixelNum = 0; pixelNum < strips[strip].length; pixelNum++)
+                {
+                    if(rand.nextInt(deltaLongevity) == 0)
+                        deltas[strip][pixelNum] = ((rand.nextDouble() * 2) - 1.0) * maxStep;
+
+                    System.out.println(deltas[strip][pixelNum]);
+
+                    strips[strip][pixelNum][3] += deltas[strip][pixelNum];
+                    strips[strip][pixelNum][3] = Math.min(Math.max(minA, strips[strip][pixelNum][3]), maxA);
+                    System.out.println("LED " + strip + ":" + pixelNum + ".A set to " + strips[strip][pixelNum][3]);
+
+                    if(rainbow)
+                    {
+                       strips[strip][pixelNum] = colorWheel( (((pixelNum * 256 / strips[strip].length) + j) & 255), strips[strip][pixelNum][3] );
+                    }
+                    else
+                    {
+                        strips[strip][pixelNum][0] = r;
+                        strips[strip][pixelNum][1] = g;
+                        strips[strip][pixelNum][2] = b;
+                    }
+                }
+            }
+
+            try
+            {
+                showStrips();
+                Thread.sleep(6); //50 updates a second
+            } catch (InterruptedException e) {
+                // recommended because catching InterruptedException clears interrupt flag
+                Thread.currentThread().interrupt();
+                // you probably want to quit if the thread is interrupted
+                return;
+            }
+
+            j++;
         }
     }
     
@@ -187,6 +259,22 @@ public class LEDStripDriver
             return new double[]{0.0, pos * 3.0, 255 - pos * 3.0, 255.0};
         }
     }
+
+    public static double [] colorWheel(int pos, double brightness)
+    {
+        if(pos < 85)
+            return new double[]{pos * 3.0, 255 - pos * 3.0, 0.0, brightness};
+        else if(pos < 170)
+        {
+            pos -= 85;
+            return new double[]{255 - pos * 3.0, 0.0, pos * 3.0, brightness};
+        }
+        else
+        {
+            pos -= 170;
+            return new double[]{0.0, pos * 3.0, 255 - pos * 3.0, brightness};
+        }
+    }
     //Display Operation Methods
     public static void showStrips()
     {
@@ -200,7 +288,7 @@ public class LEDStripDriver
         
 //         double [][][] diffed = display.updateDisplay2(strips, true);
 
-display.updateDisplay(strips, true);
+        display.updateDisplay(strips, true);
         
 //         for(int pixel = 0; pixel < 3/*diffed[0].length*/; pixel++)
 //         {
